@@ -3,10 +3,6 @@ from services.groq_client import call_groq
 
 recommend_bp = Blueprint("recommend", __name__)
 
-def load_prompt(input_text):
-    with open("prompts/recommend.txt") as f:
-        return f.read().replace("{input}", input_text)
-
 @recommend_bp.route("/recommend", methods=["POST"])
 def recommend():
     data = request.json.get("input")
@@ -14,7 +10,32 @@ def recommend():
     if not data:
         return jsonify({"error": "Invalid input"}), 400
 
-    prompt = load_prompt(data)
+    # Structured prompt
+    prompt = f"""
+Given the cybersecurity threat below, return ONLY valid JSON.
+
+Threat:
+{data}
+
+Instructions:
+- Return exactly 3 recommendations
+- Output must be a JSON array
+- Do NOT include any text outside JSON
+- Do NOT include markdown
+
+Format:
+[
+  {{
+    "action_type": "",
+    "description": "",
+    "priority": "Low | Medium | High"
+  }}
+]
+"""
+
     response = call_groq(prompt)
 
-    return jsonify({"result": response})
+    return jsonify({
+        "result": response,
+        "generated_at": "timestamp"
+    })
