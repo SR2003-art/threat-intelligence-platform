@@ -167,3 +167,40 @@ The AI service is protected against basic injection attacks and improper inputs.
 All tested cases behaved as expected with no vulnerabilities observed.
 
 ---
+
+## Prompt Tuning Evaluation – Week 2 Day 6
+
+### Objective
+
+Evaluate AI response quality and improve prompts if needed.
+
+---
+
+### Test Prompt Template
+
+Explain the concept of {topic} in simple terms for a beginner. Include a real-world example.
+
+---
+
+### Evaluation Results
+
+| Topic            | Score | Remarks                      |
+| ---------------- | ----- | ---------------------------- |
+| AI               | 9/10  | Clear and simple explanation 
+| Machine Learning | 8/10  | Slightly complex wording     
+| Cybersecurity    | 8/10  | Good but could simplify more 
+| SQL Injection    | 9/10  | Very clear with example      
+| Cloud Computing  | 8/10  | Good explanation             
+| Blockchain       | 8/10  | clear explanation 
+| API              | 9/10  | Very easy to understand      
+| Data Privacy     | 8/10  | Good explanation             
+| Encryption       | 8/10  | Could use simpler example    
+| Neural Networks  | 8/10  | Clear explanation with example        
+
+---
+
+### Conclusion
+
+Most responses are clear and accurate..
+
+---
