@@ -1,26 +1,9 @@
 import { useEffect, useState } from 'react'
-import { api } from '../services/api'
-
-type IndicatorRow = {
-  id: number
-  indicatorType: string
-  indicatorValue: string
-  status: string
-  lastSeenAt: string | null
-}
-
-function normalizeResponse(payload: unknown): IndicatorRow[] {
-  if (Array.isArray(payload)) {
-    return payload as IndicatorRow[]
-  }
-  if (payload && typeof payload === 'object' && 'content' in payload) {
-    const page = payload as { content?: unknown }
-    if (Array.isArray(page.content)) {
-      return page.content as IndicatorRow[]
-    }
-  }
-  return []
-}
+import { IndicatorTable } from '../components/IndicatorTable'
+import {
+  getThreatIndicators,
+  type IndicatorRow,
+} from '../services/indicatorService'
 
 export function HomePage() {
   const [rows, setRows] = useState<IndicatorRow[]>([])
@@ -33,9 +16,9 @@ export function HomePage() {
     const load = async () => {
       try {
         setLoading(true)
-        const response = await api.get('/threat-indicators')
+        const data = await getThreatIndicators()
         if (!active) return
-        setRows(normalizeResponse(response.data))
+        setRows(data)
       } catch {
         if (!active) return
         setError('Unable to load indicators right now.')
@@ -74,32 +57,7 @@ export function HomePage() {
           No indicators found.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-800">
-          <table className="min-w-full divide-y divide-slate-800 text-left text-sm">
-            <thead className="bg-slate-900 text-slate-300">
-              <tr>
-                <th className="px-4 py-3 font-medium">ID</th>
-                <th className="px-4 py-3 font-medium">Type</th>
-                <th className="px-4 py-3 font-medium">Value</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Last Seen</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800 bg-slate-950/60 text-slate-200">
-              {rows.map((row) => (
-                <tr key={row.id}>
-                  <td className="px-4 py-3">{row.id}</td>
-                  <td className="px-4 py-3">{row.indicatorType}</td>
-                  <td className="max-w-[34rem] truncate px-4 py-3">
-                    {row.indicatorValue}
-                  </td>
-                  <td className="px-4 py-3">{row.status}</td>
-                  <td className="px-4 py-3">{row.lastSeenAt ?? '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <IndicatorTable rows={rows} />
       )}
     </div>
   )
