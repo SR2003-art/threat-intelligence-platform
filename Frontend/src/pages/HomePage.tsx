@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { AiPanel } from '../components/AiPanel'
 import { IndicatorForm } from '../components/IndicatorForm'
 import { IndicatorTable } from '../components/IndicatorTable'
-import { useAuth } from '../context/useAuth'
+import { useAuth } from '../context/AuthContext'
 import {
   createThreatIndicator,
   deleteThreatIndicator,
@@ -59,13 +59,11 @@ export function HomePage() {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
   useEffect(() => {
     loadData(0).catch(() => {
       // loadData handles local error state; this catch avoids unhandled warnings.
     })
   }, [debouncedQuery, statusFilter, fromDate, toDate])
-  /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
   useEffect(() => {
     const editId = searchParams.get('edit')
@@ -150,7 +148,6 @@ export function HomePage() {
       </header>
 
       <IndicatorForm
-        key={editing?.id ?? 'create'}
         editing={editing}
         onCancelEdit={() => {
           setEditing(null)

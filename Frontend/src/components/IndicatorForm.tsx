@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { IndicatorPayload, IndicatorRow } from '../services/indicatorService'
 
 type IndicatorFormProps = {
@@ -25,22 +25,29 @@ export function IndicatorForm({
   onCancelEdit,
   onSubmit,
 }: IndicatorFormProps) {
-  const initialForm = editing
-    ? {
-        indicatorType: editing.indicatorType ?? '',
-        indicatorValue: editing.indicatorValue ?? '',
-        confidence: editing.confidence,
-        severity: editing.severity ?? 'MEDIUM',
-        status: editing.status ?? 'ACTIVE',
-        sourceName: editing.sourceName ?? '',
-        sourceReference: editing.sourceReference ?? '',
-        description: editing.description ?? '',
-      }
-    : INITIAL_FORM
-
-  const [form, setForm] = useState<IndicatorPayload>(initialForm)
+  const [form, setForm] = useState<IndicatorPayload>(INITIAL_FORM)
   const [errors, setErrors] = useState<FormErrors>({})
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!editing) {
+      setForm(INITIAL_FORM)
+      setErrors({})
+      return
+    }
+
+    setForm({
+      indicatorType: editing.indicatorType ?? '',
+      indicatorValue: editing.indicatorValue ?? '',
+      confidence: editing.confidence,
+      severity: editing.severity ?? 'MEDIUM',
+      status: editing.status ?? 'ACTIVE',
+      sourceName: editing.sourceName ?? '',
+      sourceReference: editing.sourceReference ?? '',
+      description: editing.description ?? '',
+    })
+    setErrors({})
+  }, [editing])
 
   const title = useMemo(
     () => (editing ? `Edit indicator #${editing.id}` : 'Create indicator'),
