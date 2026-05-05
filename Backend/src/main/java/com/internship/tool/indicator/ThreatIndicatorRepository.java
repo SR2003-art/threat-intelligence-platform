@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +64,66 @@ public class ThreatIndicatorRepository {
                 ORDER BY id DESC
                 LIMIT :size OFFSET :offset
                 """, Map.of("size", safeSize, "offset", offset), ROW_MAPPER);
+
+        return new PagedResponse<>(content, total, safePage, safeSize, totalPages);
+    }
+
+    public PagedResponse<ThreatIndicator> findAllActivePagedFiltered(
+            int page,
+            int size,
+            String query,
+            String status,
+            LocalDate fromDate,
+            LocalDate toDate
+    ) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.max(size, 1);
+        int offset = safePage * safeSize;
+
+        String q = query == null ? "" : query.trim().toLowerCase();
+        String normalizedStatus = status == null ? "" : status.trim().toUpperCase();
+
+        var params = new MapSqlParameterSource()
+                .addValue("q", "%" + q + "%")
+                .addValue("status", normalizedStatus)
+                .addValue("fromDate", fromDate)
+                .addValue("toDate", toDate)
+                .addValue("size", safeSize)
+                .addValue("offset", offset);
+
+        Long totalElements = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*)
+                FROM threat_indicator
+                WHERE status <> 'INACTIVE'
+                  AND (:status = '' OR UPPER(status) = :status)
+                  AND (:q = '%%' OR (
+                      LOWER(indicator_value) LIKE :q
+                      OR LOWER(COALESCE(description, '')) LIKE :q
+                      OR LOWER(COALESCE(source_name, '')) LIKE :q
+                      OR LOWER(indicator_type) LIKE :q
+                  ))
+                  AND (:fromDate IS NULL OR DATE(last_seen_at) >= :fromDate)
+                  AND (:toDate IS NULL OR DATE(last_seen_at) <= :toDate)
+                """, params, Long.class);
+        long total = totalElements == null ? 0 : totalElements;
+        int totalPages = total == 0 ? 0 : (int) Math.ceil((double) total / safeSize);
+
+        List<ThreatIndicator> content = jdbcTemplate.query("""
+                SELECT id, indicator_type, indicator_value, confidence, severity, status, source_name, source_reference, description, last_seen_at
+                FROM threat_indicator
+                WHERE status <> 'INACTIVE'
+                  AND (:status = '' OR UPPER(status) = :status)
+                  AND (:q = '%%' OR (
+                      LOWER(indicator_value) LIKE :q
+                      OR LOWER(COALESCE(description, '')) LIKE :q
+                      OR LOWER(COALESCE(source_name, '')) LIKE :q
+                      OR LOWER(indicator_type) LIKE :q
+                  ))
+                  AND (:fromDate IS NULL OR DATE(last_seen_at) >= :fromDate)
+                  AND (:toDate IS NULL OR DATE(last_seen_at) <= :toDate)
+                ORDER BY id DESC
+                LIMIT :size OFFSET :offset
+                """, params, ROW_MAPPER);
 
         return new PagedResponse<>(content, total, safePage, safeSize, totalPages);
     }

@@ -8,7 +8,6 @@ import {
   deleteThreatIndicator,
   getThreatIndicatorById,
   getThreatIndicatorsPaged,
-  searchThreatIndicators,
   type IndicatorPayload,
   type IndicatorRow,
   updateThreatIndicator,
@@ -21,29 +20,30 @@ export function HomePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
   const [editing, setEditing] = useState<IndicatorRow | null>(null)
   const [page, setPage] = useState(0)
   const [size] = useState(10)
   const [totalPages, setTotalPages] = useState(0)
   const [totalElements, setTotalElements] = useState(0)
 
-  const loadData = async (query?: string, nextPage = page) => {
+  const loadData = async (nextPage = page) => {
     try {
       setLoading(true)
       setError(null)
-      if (query && query.trim().length > 0) {
-        const data = await searchThreatIndicators(query.trim())
-        setRows(data)
-        setTotalElements(data.length)
-        setTotalPages(1)
-        setPage(0)
-      } else {
-        const paged = await getThreatIndicatorsPaged(nextPage, size)
-        setRows(paged.content)
-        setTotalElements(paged.totalElements)
-        setTotalPages(paged.totalPages)
-        setPage(paged.page)
-      }
+      const paged = await getThreatIndicatorsPaged(nextPage, size, {
+        q: debouncedQuery.trim(),
+        status: statusFilter,
+        fromDate,
+        toDate,
+      })
+      setRows(paged.content)
+      setTotalElements(paged.totalElements)
+      setTotalPages(paged.totalPages)
+      setPage(paged.page)
     } catch {
       setError('Unable to load indicators right now.')
     } finally {
@@ -52,10 +52,17 @@ export function HomePage() {
   }
 
   useEffect(() => {
-    loadData().catch(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery)
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  useEffect(() => {
+    loadData(0).catch(() => {
       // loadData handles local error state; this catch avoids unhandled warnings.
     })
-  }, [])
+  }, [debouncedQuery, statusFilter, fromDate, toDate])
 
   useEffect(() => {
     const editId = searchParams.get('edit')
@@ -77,7 +84,7 @@ export function HomePage() {
     } else {
       await createThreatIndicator(payload)
     }
-    await loadData(searchQuery, page)
+    await loadData(page)
   }
 
   const handleDelete = async (row: IndicatorRow) => {
@@ -88,22 +95,20 @@ export function HomePage() {
       next.delete('edit')
       setSearchParams(next)
     }
-    await loadData(searchQuery, page)
-  }
-
-  const handleSearch = async (event: React.FormEvent) => {
-    event.preventDefault()
-    await loadData(searchQuery, 0)
+    await loadData(page)
   }
 
   const clearSearch = async () => {
     setSearchQuery('')
-    await loadData('', 0)
+    setStatusFilter('')
+    setFromDate('')
+    setToDate('')
+    await loadData(0)
   }
 
   const goToPage = async (nextPage: number) => {
     if (nextPage < 0 || nextPage >= totalPages) return
-    await loadData('', nextPage)
+    await loadData(nextPage)
   }
 
   return (
@@ -146,27 +151,53 @@ export function HomePage() {
         onSubmit={handleSubmit}
       />
 
-      <form onSubmit={handleSearch} className="flex gap-2">
+      <div className="grid gap-2 md:grid-cols-4">
         <input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search by value, description, source, type..."
+          placeholder="Search by value, description, source, type (debounced)"
+          className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm md:col-span-2"
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+        >
+          <option value="">All Statuses</option>
+          <option value="ACTIVE">ACTIVE</option>
+          <option value="EXPIRED">EXPIRED</option>
+          <option value="FALSE_POSITIVE">FALSE_POSITIVE</option>
+          <option value="INACTIVE">INACTIVE</option>
+        </select>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={clearSearch}
+            className="rounded border border-slate-600 px-4 py-2 text-sm hover:bg-slate-800"
+          >
+            Clear
+          </button>
+        </div>
+        <input
+          type="date"
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+          className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+        />
+        <input
+          type="date"
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
           className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
         />
         <button
-          type="submit"
-          className="rounded border border-slate-600 px-4 py-2 text-sm hover:bg-slate-800"
-        >
-          Search
-        </button>
-        <button
           type="button"
-          onClick={clearSearch}
-          className="rounded border border-slate-600 px-4 py-2 text-sm hover:bg-slate-800"
+          onClick={() => loadData(0)}
+          className="rounded border border-slate-600 px-4 py-2 text-sm hover:bg-slate-800 md:w-fit"
         >
-          Clear
+          Apply
         </button>
-      </form>
+      </div>
 
       {loading ? (
         <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4 text-slate-300">
@@ -183,32 +214,30 @@ export function HomePage() {
       ) : (
         <div className="space-y-3">
           <IndicatorTable rows={rows} onEdit={setEditing} onDelete={handleDelete} />
-          {searchQuery.trim() === '' ? (
-            <div className="flex items-center justify-between text-sm text-slate-300">
-              <p>
-                Showing page {page + 1} of {Math.max(totalPages, 1)} ({totalElements} total
-                records)
-              </p>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  disabled={page <= 0}
-                  onClick={() => goToPage(page - 1)}
-                  className="rounded border border-slate-600 px-3 py-1 disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button
-                  type="button"
-                  disabled={page + 1 >= totalPages}
-                  onClick={() => goToPage(page + 1)}
-                  className="rounded border border-slate-600 px-3 py-1 disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
+          <div className="flex items-center justify-between text-sm text-slate-300">
+            <p>
+              Showing page {page + 1} of {Math.max(totalPages, 1)} ({totalElements} total
+              records)
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={page <= 0}
+                onClick={() => goToPage(page - 1)}
+                className="rounded border border-slate-600 px-3 py-1 disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                disabled={page + 1 >= totalPages}
+                onClick={() => goToPage(page + 1)}
+                className="rounded border border-slate-600 px-3 py-1 disabled:opacity-50"
+              >
+                Next
+              </button>
             </div>
-          ) : null}
+          </div>
         </div>
       )}
     </div>

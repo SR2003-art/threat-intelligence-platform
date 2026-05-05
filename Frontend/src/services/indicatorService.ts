@@ -61,9 +61,22 @@ export async function getThreatIndicators(): Promise<IndicatorRow[]> {
 export async function getThreatIndicatorsPaged(
   page: number,
   size: number,
+  filters?: {
+    q?: string
+    status?: string
+    fromDate?: string
+    toDate?: string
+  },
 ): Promise<PagedIndicatorResponse> {
   const response = await api.get<PagedIndicatorResponse>('/threat-indicators/all', {
-    params: { page, size },
+    params: {
+      page,
+      size,
+      q: filters?.q || undefined,
+      status: filters?.status || undefined,
+      fromDate: filters?.fromDate || undefined,
+      toDate: filters?.toDate || undefined,
+    },
   })
   const data = response.data
   return {

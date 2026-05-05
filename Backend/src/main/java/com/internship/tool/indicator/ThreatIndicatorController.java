@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -33,9 +34,13 @@ public class ThreatIndicatorController {
     @GetMapping("/all")
     public PagedResponse<ThreatIndicator> getAllPaged(
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "q", required = false) String query,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
+            @RequestParam(value = "toDate", required = false) LocalDate toDate
     ) {
-        return repository.findAllActivePaged(page, size);
+        return repository.findAllActivePagedFiltered(page, size, query, status, fromDate, toDate);
     }
 
     @GetMapping("/stats")
