@@ -42,6 +42,30 @@ public class ThreatIndicatorRepository {
                 """, ROW_MAPPER);
     }
 
+    public PagedResponse<ThreatIndicator> findAllActivePaged(int page, int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.max(size, 1);
+        int offset = safePage * safeSize;
+
+        Long totalElements = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*)
+                FROM threat_indicator
+                WHERE status <> 'INACTIVE'
+                """, Map.of(), Long.class);
+        long total = totalElements == null ? 0 : totalElements;
+        int totalPages = total == 0 ? 0 : (int) Math.ceil((double) total / safeSize);
+
+        List<ThreatIndicator> content = jdbcTemplate.query("""
+                SELECT id, indicator_type, indicator_value, confidence, severity, status, source_name, source_reference, description, last_seen_at
+                FROM threat_indicator
+                WHERE status <> 'INACTIVE'
+                ORDER BY id DESC
+                LIMIT :size OFFSET :offset
+                """, Map.of("size", safeSize, "offset", offset), ROW_MAPPER);
+
+        return new PagedResponse<>(content, total, safePage, safeSize, totalPages);
+    }
+
     public List<ThreatIndicator> searchActive(String q) {
         return jdbcTemplate.query("""
                 SELECT id, indicator_type, indicator_value, confidence, severity, status, source_name, source_reference, description, last_seen_at

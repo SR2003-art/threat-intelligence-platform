@@ -14,3 +14,16 @@ export const api = axios.create({
   },
   timeout: 30_000,
 })
+
+export function setAuthToken(token: string | null) {
+  if (token) {
+    api.defaults.headers.common.Authorization = `Bearer ${token}`
+  } else {
+    delete api.defaults.headers.common.Authorization
+  }
+}
+
+const storedToken = localStorage.getItem('auth_token')
+if (storedToken) {
+  setAuthToken(storedToken)
+}
