@@ -1,9 +1,9 @@
 package com.internship.tool.indicator;
 
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.GeneratedKeyHolder;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
@@ -261,7 +261,7 @@ public class ThreatIndicatorRepository {
         if (rows.isEmpty()) {
             throw new IndicatorNotFoundException(id);
         }
-        return rows.getFirst();
+        return rows.get(0);
     }
 
     private MapSqlParameterSource requestToParams(ThreatIndicatorRequest request) {
