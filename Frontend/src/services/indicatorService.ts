@@ -3,56 +3,25 @@ import { api } from './api'
 export type IndicatorRow = {
   id: number
   indicatorType: string
-  value: string
-  confidence: number | null
-  severity: string
+  indicatorValue: string
   status: string
-  source: string
-  sourceReference: string | null
-  title: string | null
-  description: string | null
-  lastObserved: string | null
+  lastSeenAt: string | null
 }
 
-export type IndicatorPayload = {
-  indicatorType: string
-  value: string
-  confidence: number | null
-  severity: string
-  status: string
-  source: string
-  sourceReference: string
-  title: string
-  description: string
+function normalizeResponse(payload: unknown): IndicatorRow[] {
+  if (Array.isArray(payload)) {
+    return payload as IndicatorRow[]
+  }
+  if (payload && typeof payload === 'object' && 'content' in payload) {
+    const page = payload as { content?: unknown }
+    if (Array.isArray(page.content)) {
+      return page.content as IndicatorRow[]
+    }
+  }
+  return []
 }
 
 export async function getThreatIndicators(): Promise<IndicatorRow[]> {
-  const response = await api.get<IndicatorRow[]>('/api/threat-indicators')
-  return response.data
-}
-
-export async function searchThreatIndicators(query: string): Promise<IndicatorRow[]> {
-  const response = await api.get<IndicatorRow[]>('/api/threat-indicators/search', {
-    params: { q: query },
-  })
-  return response.data
-}
-
-export async function createThreatIndicator(
-  payload: IndicatorPayload,
-): Promise<IndicatorRow> {
-  const response = await api.post<IndicatorRow>('/api/threat-indicators', payload)
-  return response.data
-}
-
-export async function updateThreatIndicator(
-  id: number,
-  payload: IndicatorPayload,
-): Promise<IndicatorRow> {
-  const response = await api.put<IndicatorRow>(`/api/threat-indicators/${id}`, payload)
-  return response.data
-}
-
-export async function deleteThreatIndicator(id: number): Promise<void> {
-  await api.delete(`/api/threat-indicators/${id}`)
+  const response = await api.get('/threat-indicators')
+  return normalizeResponse(response.data)
 }
