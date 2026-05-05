@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { IndicatorForm } from '../components/IndicatorForm'
 import { IndicatorTable } from '../components/IndicatorTable'
 import { useAuth } from '../context/AuthContext'
 import {
   createThreatIndicator,
   deleteThreatIndicator,
+  getThreatIndicatorById,
   getThreatIndicatorsPaged,
   searchThreatIndicators,
   type IndicatorPayload,
@@ -14,6 +16,7 @@ import {
 
 export function HomePage() {
   const { username, logout } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [rows, setRows] = useState<IndicatorRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -54,10 +57,23 @@ export function HomePage() {
     })
   }, [])
 
+  useEffect(() => {
+    const editId = searchParams.get('edit')
+    if (!editId) return
+    getThreatIndicatorById(Number(editId))
+      .then((row) => setEditing(row))
+      .catch(() => {
+        setError('Unable to load selected indicator for editing.')
+      })
+  }, [searchParams])
+
   const handleSubmit = async (payload: IndicatorPayload, id?: number) => {
     if (id) {
       await updateThreatIndicator(id, payload)
       setEditing(null)
+      const next = new URLSearchParams(searchParams)
+      next.delete('edit')
+      setSearchParams(next)
     } else {
       await createThreatIndicator(payload)
     }
@@ -68,6 +84,9 @@ export function HomePage() {
     await deleteThreatIndicator(row.id)
     if (editing?.id === row.id) {
       setEditing(null)
+      const next = new URLSearchParams(searchParams)
+      next.delete('edit')
+      setSearchParams(next)
     }
     await loadData(searchQuery, page)
   }
@@ -95,6 +114,12 @@ export function HomePage() {
             Threat Intelligence Platform
           </p>
           <div className="flex items-center gap-3 text-sm text-slate-300">
+            <Link
+              to="/dashboard"
+              className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-800"
+            >
+              Dashboard
+            </Link>
             <span>{username}</span>
             <button
               type="button"
@@ -112,7 +137,12 @@ export function HomePage() {
 
       <IndicatorForm
         editing={editing}
-        onCancelEdit={() => setEditing(null)}
+        onCancelEdit={() => {
+          setEditing(null)
+          const next = new URLSearchParams(searchParams)
+          next.delete('edit')
+          setSearchParams(next)
+        }}
         onSubmit={handleSubmit}
       />
 

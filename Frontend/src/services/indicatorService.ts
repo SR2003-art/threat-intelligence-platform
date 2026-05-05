@@ -32,6 +32,14 @@ export type PagedIndicatorResponse = {
   totalPages: number
 }
 
+export type IndicatorStats = {
+  totalIndicators: number
+  activeIndicators: number
+  highSeverityIndicators: number
+  averageConfidence: number
+  severityBreakdown: { severity: string; count: number }[]
+}
+
 function normalizeResponse(payload: unknown): IndicatorRow[] {
   if (Array.isArray(payload)) {
     return payload as IndicatorRow[]
@@ -92,4 +100,14 @@ export async function updateThreatIndicator(
 
 export async function deleteThreatIndicator(id: number): Promise<void> {
   await api.delete(`/threat-indicators/${id}`)
+}
+
+export async function getThreatIndicatorById(id: number): Promise<IndicatorRow> {
+  const response = await api.get<IndicatorRow>(`/threat-indicators/${id}`)
+  return response.data
+}
+
+export async function getIndicatorStats(): Promise<IndicatorStats> {
+  const response = await api.get<IndicatorStats>('/threat-indicators/stats')
+  return response.data
 }

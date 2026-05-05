@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -79,6 +80,60 @@ public class ThreatIndicatorRepository {
                   )
                 ORDER BY id DESC
                 """, Map.of("q", "%" + q.toLowerCase() + "%"), ROW_MAPPER);
+    }
+
+    public ThreatIndicator getById(Long id) {
+        return findById(id);
+    }
+
+    public IndicatorStatsResponse getStats() {
+        Long totalIndicators = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*)
+                FROM threat_indicator
+                """, Map.of(), Long.class);
+
+        Long activeIndicators = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*)
+                FROM threat_indicator
+                WHERE status <> 'INACTIVE'
+                """, Map.of(), Long.class);
+
+        Long highSeverityIndicators = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*)
+                FROM threat_indicator
+                WHERE UPPER(severity) IN ('HIGH', 'CRITICAL')
+                  AND status <> 'INACTIVE'
+                """, Map.of(), Long.class);
+
+        Double averageConfidence = jdbcTemplate.queryForObject("""
+                SELECT COALESCE(AVG(confidence), 0)
+                FROM threat_indicator
+                WHERE confidence IS NOT NULL
+                  AND status <> 'INACTIVE'
+                """, Map.of(), Double.class);
+
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
+                SELECT UPPER(COALESCE(severity, 'UNKNOWN')) AS severity, COUNT(*) AS count
+                FROM threat_indicator
+                WHERE status <> 'INACTIVE'
+                GROUP BY UPPER(COALESCE(severity, 'UNKNOWN'))
+                ORDER BY count DESC
+                """, Map.of());
+
+        List<IndicatorStatsResponse.SeverityPoint> breakdown = new ArrayList<>();
+        for (Map<String, Object> row : rows) {
+            String severity = String.valueOf(row.get("severity"));
+            long count = ((Number) row.get("count")).longValue();
+            breakdown.add(new IndicatorStatsResponse.SeverityPoint(severity, count));
+        }
+
+        return new IndicatorStatsResponse(
+                totalIndicators == null ? 0 : totalIndicators,
+                activeIndicators == null ? 0 : activeIndicators,
+                highSeverityIndicators == null ? 0 : highSeverityIndicators,
+                averageConfidence == null ? 0 : averageConfidence,
+                breakdown
+        );
     }
 
     public ThreatIndicator create(ThreatIndicatorRequest request) {

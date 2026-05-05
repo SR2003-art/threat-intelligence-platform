@@ -38,6 +38,16 @@ public class ThreatIndicatorController {
         return repository.findAllActivePaged(page, size);
     }
 
+    @GetMapping("/stats")
+    public IndicatorStatsResponse stats() {
+        return repository.getStats();
+    }
+
+    @GetMapping("/{id}")
+    public ThreatIndicator getOne(@PathVariable("id") Long id) {
+        return repository.getById(id);
+    }
+
     @GetMapping("/search")
     public List<ThreatIndicator> search(@RequestParam("q") String query) {
         if (query == null || query.isBlank()) {

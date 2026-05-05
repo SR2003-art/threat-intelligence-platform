@@ -1,4 +1,5 @@
 import type { IndicatorRow } from '../services/indicatorService'
+import { Link } from 'react-router-dom'
 
 type IndicatorTableProps = {
   rows: IndicatorRow[]
@@ -32,6 +33,12 @@ export function IndicatorTable({ rows, onEdit, onDelete }: IndicatorTableProps) 
               <td className="px-4 py-3">{row.lastSeenAt ?? '-'}</td>
               <td className="px-4 py-3">
                 <div className="flex gap-2">
+                  <Link
+                    to={`/indicators/${row.id}`}
+                    className="rounded border border-blue-900 px-2 py-1 text-xs text-blue-200 hover:bg-blue-950/40"
+                  >
+                    View
+                  </Link>
                   <button
                     type="button"
                     onClick={() => onEdit(row)}
