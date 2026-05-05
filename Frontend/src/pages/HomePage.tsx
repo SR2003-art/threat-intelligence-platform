@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AiPanel } from '../components/AiPanel'
 import { IndicatorForm } from '../components/IndicatorForm'
 import { IndicatorTable } from '../components/IndicatorTable'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 import {
   createThreatIndicator,
   deleteThreatIndicator,
@@ -31,26 +31,29 @@ export function HomePage() {
   const [totalPages, setTotalPages] = useState(0)
   const [totalElements, setTotalElements] = useState(0)
 
-  const loadData = async (nextPage = page) => {
-    try {
-      setLoading(true)
-      setError(null)
-      const paged = await getThreatIndicatorsPaged(nextPage, size, {
-        q: debouncedQuery.trim(),
-        status: statusFilter,
-        fromDate,
-        toDate,
-      })
-      setRows(paged.content)
-      setTotalElements(paged.totalElements)
-      setTotalPages(paged.totalPages)
-      setPage(paged.page)
-    } catch {
-      setError('Unable to load indicators right now.')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const loadData = useCallback(
+    async (nextPage = page) => {
+      try {
+        setLoading(true)
+        setError(null)
+        const paged = await getThreatIndicatorsPaged(nextPage, size, {
+          q: debouncedQuery.trim(),
+          status: statusFilter,
+          fromDate,
+          toDate,
+        })
+        setRows(paged.content)
+        setTotalElements(paged.totalElements)
+        setTotalPages(paged.totalPages)
+        setPage(paged.page)
+      } catch {
+        setError('Unable to load indicators right now.')
+      } finally {
+        setLoading(false)
+      }
+    },
+    [debouncedQuery, fromDate, page, size, statusFilter, toDate],
+  )
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -60,10 +63,13 @@ export function HomePage() {
   }, [searchQuery])
 
   useEffect(() => {
-    loadData(0).catch(() => {
-      // loadData handles local error state; this catch avoids unhandled warnings.
-    })
-  }, [debouncedQuery, statusFilter, fromDate, toDate])
+    const timer = setTimeout(() => {
+      loadData(0).catch(() => {
+        // loadData handles local error state; this catch avoids unhandled warnings.
+      })
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [loadData])
 
   useEffect(() => {
     const editId = searchParams.get('edit')
@@ -148,6 +154,7 @@ export function HomePage() {
       </header>
 
       <IndicatorForm
+        key={editing?.id ?? 'create'}
         editing={editing}
         onCancelEdit={() => {
           setEditing(null)

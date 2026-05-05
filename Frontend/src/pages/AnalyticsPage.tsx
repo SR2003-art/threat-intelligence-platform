@@ -15,6 +15,7 @@ import {
 import { getThreatIndicatorsPaged, type IndicatorRow } from '../services/indicatorService'
 
 type PeriodOption = '7d' | '30d' | '90d'
+const ANALYTICS_REFERENCE_NOW = Date.now()
 
 export function AnalyticsPage() {
   const [period, setPeriod] = useState<PeriodOption>('30d')
@@ -40,7 +41,7 @@ export function AnalyticsPage() {
 
   const filtered = useMemo(() => {
     const days = period === '7d' ? 7 : period === '30d' ? 30 : 90
-    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000
+    const cutoff = ANALYTICS_REFERENCE_NOW - days * 24 * 60 * 60 * 1000
     return rows.filter((row) => {
       if (!row.lastSeenAt) return false
       const timestamp = new Date(row.lastSeenAt).getTime()
