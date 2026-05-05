@@ -126,6 +126,12 @@ export function HomePage() {
             >
               Dashboard
             </Link>
+            <Link
+              to="/analytics"
+              className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-800"
+            >
+              Analytics
+            </Link>
             <span>{username}</span>
             <button
               type="button"

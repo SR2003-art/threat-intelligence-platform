@@ -1,6 +1,7 @@
 import { AppShell } from './components/AppShell'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AuthProvider } from './context/AuthContext'
+import { AnalyticsPage } from './pages/AnalyticsPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { HomePage } from './pages/HomePage'
 import { IndicatorDetailPage } from './pages/IndicatorDetailPage'
@@ -17,6 +18,7 @@ export default function App() {
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/indicators/:id" element={<IndicatorDetailPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
