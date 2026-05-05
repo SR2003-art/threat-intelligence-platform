@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { AiPanel } from '../components/AiPanel'
 import { IndicatorForm } from '../components/IndicatorForm'
 import { IndicatorTable } from '../components/IndicatorTable'
 import { useAuth } from '../context/AuthContext'
@@ -150,6 +151,7 @@ export function HomePage() {
         }}
         onSubmit={handleSubmit}
       />
+      <AiPanel />
 
       <div className="grid gap-2 md:grid-cols-4">
         <input

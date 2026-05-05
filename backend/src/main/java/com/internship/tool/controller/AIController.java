@@ -1,6 +1,8 @@
 package com.internship.tool.controller;
 
 import com.internship.tool.service.AIServiceClient;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,5 +18,13 @@ public class AIController {
     @GetMapping("/ai/test")
     public String testAI() {
         return aiServiceClient.callAIService();
+    }
+
+    @PostMapping("/ai/recommend")
+    public String recommend(@RequestBody RecommendRequest request) {
+        return aiServiceClient.getRecommendations(request.prompt());
+    }
+
+    public record RecommendRequest(String prompt) {
     }
 }
