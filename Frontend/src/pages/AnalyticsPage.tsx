@@ -109,7 +109,7 @@ export function AnalyticsPage() {
         </div>
       </header>
 
-      <section className="grid gap-3 sm:grid-cols-3">
+      <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
         <article className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
           <p className="text-xs uppercase tracking-wide text-slate-400">Indicators In Period</p>
           <p className="mt-2 text-2xl font-semibold text-white">{filtered.length}</p>
@@ -124,7 +124,7 @@ export function AnalyticsPage() {
         </article>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-2">
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
           <h2 className="mb-3 text-lg font-medium text-slate-100">Severity Distribution</h2>
           <div className="h-72 w-full">

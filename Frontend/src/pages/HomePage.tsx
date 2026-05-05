@@ -114,12 +114,12 @@ export function HomePage() {
 
   return (
     <div className="space-y-6">
-      <header className="space-y-2">
-        <div className="flex items-center justify-between">
+      <header className="space-y-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-medium uppercase tracking-wide text-violet-400">
             Threat Intelligence Platform
           </p>
-          <div className="flex items-center gap-3 text-sm text-slate-300">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-slate-300">
             <Link
               to="/dashboard"
               className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-800"
@@ -159,7 +159,7 @@ export function HomePage() {
       />
       <AiPanel />
 
-      <div className="grid gap-2 md:grid-cols-4">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -177,7 +177,7 @@ export function HomePage() {
           <option value="FALSE_POSITIVE">FALSE_POSITIVE</option>
           <option value="INACTIVE">INACTIVE</option>
         </select>
-        <div className="flex gap-2">
+        <div className="flex gap-2 sm:justify-start lg:justify-end">
           <button
             type="button"
             onClick={clearSearch}
@@ -222,12 +222,12 @@ export function HomePage() {
       ) : (
         <div className="space-y-3">
           <IndicatorTable rows={rows} onEdit={setEditing} onDelete={handleDelete} />
-          <div className="flex items-center justify-between text-sm text-slate-300">
+          <div className="flex flex-col gap-2 text-sm text-slate-300 sm:flex-row sm:items-center sm:justify-between">
             <p>
               Showing page {page + 1} of {Math.max(totalPages, 1)} ({totalElements} total
               records)
             </p>
-            <div className="flex gap-2">
+            <div className="flex gap-2 self-start sm:self-auto">
               <button
                 type="button"
                 disabled={page <= 0}

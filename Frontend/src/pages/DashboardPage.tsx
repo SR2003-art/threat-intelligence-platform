@@ -49,7 +49,7 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">Dashboard</h1>
         <Link
           to="/"
@@ -59,7 +59,7 @@ export function DashboardPage() {
         </Link>
       </header>
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
           <article key={card.label} className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400">{card.label}</p>
