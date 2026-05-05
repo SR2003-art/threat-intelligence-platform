@@ -95,7 +95,7 @@ public class ThreatIndicatorRepository {
                 SELECT COUNT(*)
                 FROM threat_indicator
                 WHERE status <> 'INACTIVE'
-                  AND (:status = '' OR UPPER(status) = :status)
+                  AND (:status = '' OR status = :status)
                   AND (:q = '%%' OR (
                       LOWER(indicator_value) LIKE :q
                       OR LOWER(COALESCE(description, '')) LIKE :q
@@ -112,7 +112,7 @@ public class ThreatIndicatorRepository {
                 SELECT id, indicator_type, indicator_value, confidence, severity, status, source_name, source_reference, description, last_seen_at
                 FROM threat_indicator
                 WHERE status <> 'INACTIVE'
-                  AND (:status = '' OR UPPER(status) = :status)
+                  AND (:status = '' OR status = :status)
                   AND (:q = '%%' OR (
                       LOWER(indicator_value) LIKE :q
                       OR LOWER(COALESCE(description, '')) LIKE :q
@@ -162,7 +162,7 @@ public class ThreatIndicatorRepository {
         Long highSeverityIndicators = jdbcTemplate.queryForObject("""
                 SELECT COUNT(*)
                 FROM threat_indicator
-                WHERE UPPER(severity) IN ('HIGH', 'CRITICAL')
+                WHERE severity IN ('HIGH', 'CRITICAL')
                   AND status <> 'INACTIVE'
                 """, Map.of(), Long.class);
 
@@ -199,8 +199,9 @@ public class ThreatIndicatorRepository {
 
     public ThreatIndicator create(ThreatIndicatorRequest request) {
         var keyHolder = new GeneratedKeyHolder();
+        LocalDateTime now = LocalDateTime.now();
         var params = requestToParams(request)
-                .addValue("last_seen_at", Timestamp.valueOf(LocalDateTime.now()));
+                .addValue("last_seen_at", Timestamp.valueOf(now));
         jdbcTemplate.update("""
                 INSERT INTO threat_indicator (
                     indicator_type, indicator_value, confidence, severity, status, source_name, source_reference, description, last_seen_at
@@ -212,13 +213,14 @@ public class ThreatIndicatorRepository {
         if (key == null) {
             throw new IllegalStateException("Failed to create threat indicator");
         }
-        return findById(key.longValue());
+        return toThreatIndicator(key.longValue(), request, now);
     }
 
     public ThreatIndicator update(Long id, ThreatIndicatorRequest request) {
+        LocalDateTime now = LocalDateTime.now();
         var params = requestToParams(request)
                 .addValue("id", id)
-                .addValue("last_seen_at", Timestamp.valueOf(LocalDateTime.now()));
+                .addValue("last_seen_at", Timestamp.valueOf(now));
         int updated = jdbcTemplate.update("""
                 UPDATE threat_indicator
                 SET indicator_type = :indicator_type,
@@ -235,7 +237,7 @@ public class ThreatIndicatorRepository {
         if (updated == 0) {
             throw new IndicatorNotFoundException(id);
         }
-        return findById(id);
+        return toThreatIndicator(id, request, now);
     }
 
     public void softDelete(Long id) {
@@ -272,5 +274,20 @@ public class ThreatIndicatorRepository {
                 .addValue("source_name", request.sourceName())
                 .addValue("source_reference", request.sourceReference())
                 .addValue("description", request.description());
+    }
+
+    private ThreatIndicator toThreatIndicator(Long id, ThreatIndicatorRequest request, LocalDateTime lastSeenAt) {
+        return new ThreatIndicator(
+                id,
+                request.indicatorType().trim().toUpperCase(),
+                request.indicatorValue().trim(),
+                request.confidence(),
+                request.severity().trim().toUpperCase(),
+                request.status().trim().toUpperCase(),
+                request.sourceName(),
+                request.sourceReference(),
+                request.description(),
+                lastSeenAt
+        );
     }
 }

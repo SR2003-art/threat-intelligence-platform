@@ -40,7 +40,12 @@ export function AnalyticsPage() {
 
   const filtered = useMemo(() => {
     const days = period === '7d' ? 7 : period === '30d' ? 30 : 90
-    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000
+    const latestTimestamp = rows.reduce((max, row) => {
+      if (!row.lastSeenAt) return max
+      const ts = new Date(row.lastSeenAt).getTime()
+      return Number.isFinite(ts) && ts > max ? ts : max
+    }, 0)
+    const cutoff = latestTimestamp - days * 24 * 60 * 60 * 1000
     return rows.filter((row) => {
       if (!row.lastSeenAt) return false
       const timestamp = new Date(row.lastSeenAt).getTime()
