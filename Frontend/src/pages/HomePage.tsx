@@ -122,27 +122,30 @@ export function HomePage() {
     <div className="space-y-6">
       <header className="space-y-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-medium uppercase tracking-wide text-violet-400">
+          <p className="text-xs font-semibold uppercase tracking-wide text-violet-300">
             Threat Intelligence Platform
           </p>
           <div className="flex flex-wrap items-center gap-2 text-sm text-slate-300">
             <Link
               to="/dashboard"
-              className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-800"
+              className="rounded-md border border-slate-700 bg-slate-900/30 px-2.5 py-1 hover:bg-slate-800/60"
             >
               Dashboard
             </Link>
             <Link
               to="/analytics"
-              className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-800"
+              className="rounded-md border border-slate-700 bg-slate-900/30 px-2.5 py-1 hover:bg-slate-800/60"
             >
               Analytics
             </Link>
-            <span>{username}</span>
+            <span className="hidden sm:inline text-slate-400">Signed in as</span>
+            <span className="rounded-md border border-slate-800 bg-slate-950/50 px-2 py-1 text-slate-200">
+              {username}
+            </span>
             <button
               type="button"
               onClick={logout}
-              className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-800"
+              className="rounded-md border border-slate-700 bg-slate-900/30 px-2.5 py-1 hover:bg-slate-800/60"
             >
               Logout
             </button>
@@ -166,53 +169,79 @@ export function HomePage() {
       />
       <AiPanel />
 
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <input
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search by value, description, source, type (debounced)"
-          className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm md:col-span-2"
-        />
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
-        >
-          <option value="">All Statuses</option>
-          <option value="ACTIVE">ACTIVE</option>
-          <option value="EXPIRED">EXPIRED</option>
-          <option value="FALSE_POSITIVE">FALSE_POSITIVE</option>
-          <option value="INACTIVE">INACTIVE</option>
-        </select>
-        <div className="flex gap-2 sm:justify-start lg:justify-end">
-          <button
-            type="button"
-            onClick={clearSearch}
-            className="rounded border border-slate-600 px-4 py-2 text-sm hover:bg-slate-800"
-          >
-            Clear
-          </button>
+      <section className="rounded-2xl border border-slate-800/80 bg-slate-950/30 p-4 backdrop-blur">
+        <div className="grid gap-3 lg:grid-cols-12">
+          <label className="space-y-1 lg:col-span-5">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Search
+            </span>
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Value, description, source, type…"
+              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm outline-none ring-violet-400/30 placeholder:text-slate-500 focus:border-violet-600 focus:ring-4"
+            />
+          </label>
+
+          <label className="space-y-1 lg:col-span-3">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Status
+            </span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm outline-none focus:border-violet-600"
+            >
+              <option value="">All</option>
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="EXPIRED">EXPIRED</option>
+              <option value="FALSE_POSITIVE">FALSE_POSITIVE</option>
+              <option value="INACTIVE">INACTIVE</option>
+            </select>
+          </label>
+
+          <label className="space-y-1 lg:col-span-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              From
+            </span>
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm outline-none focus:border-violet-600"
+            />
+          </label>
+
+          <label className="space-y-1 lg:col-span-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              To
+            </span>
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm outline-none focus:border-violet-600"
+            />
+          </label>
+
+          <div className="flex flex-wrap gap-2 lg:col-span-12">
+            <button
+              type="button"
+              onClick={() => loadData(0)}
+              className="rounded-lg border border-violet-700/70 bg-violet-700/60 px-4 py-2 text-sm font-medium text-white hover:bg-violet-600"
+            >
+              Apply
+            </button>
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="rounded-lg border border-slate-700 bg-slate-900/30 px-4 py-2 text-sm text-slate-100 hover:bg-slate-800/60"
+            >
+              Clear
+            </button>
+          </div>
         </div>
-        <input
-          type="date"
-          value={fromDate}
-          onChange={(e) => setFromDate(e.target.value)}
-          className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
-        />
-        <input
-          type="date"
-          value={toDate}
-          onChange={(e) => setToDate(e.target.value)}
-          className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
-        />
-        <button
-          type="button"
-          onClick={() => loadData(0)}
-          className="rounded border border-slate-600 px-4 py-2 text-sm hover:bg-slate-800 md:w-fit"
-        >
-          Apply
-        </button>
-      </div>
+      </section>
 
       {loading ? (
         <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4 text-slate-300">

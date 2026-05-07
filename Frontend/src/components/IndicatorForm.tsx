@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { IndicatorPayload, IndicatorRow } from '../services/indicatorService'
 
 type IndicatorFormProps = {
@@ -45,6 +45,11 @@ export function IndicatorForm({
   const [form, setForm] = useState<IndicatorPayload>(initialForm)
   const [errors, setErrors] = useState<FormErrors>({})
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    setForm(initialForm)
+    setErrors({})
+  }, [initialForm])
 
   const title = useMemo(
     () => (editing ? `Edit indicator #${editing.id}` : 'Create indicator'),
