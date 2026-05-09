@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  /** Backend API root (no trailing slash), e.g. http://localhost:8080/api */
+  /** Backend API origin (no trailing slash), e.g. http://localhost:8080 or http://192.168.1.10:8080 */
   readonly VITE_API_BASE_URL?: string
 }
 
