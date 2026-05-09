@@ -4,11 +4,16 @@ function normalizeBaseUrl(url: string): string {
   return url.replace(/\/+$/, '')
 }
 
-const raw = import.meta.env.VITE_API_BASE_URL?.trim()
-const baseURL = raw ? normalizeBaseUrl(raw) : ''
+function resolveApiBaseURL(): string | undefined {
+  if (import.meta.env.DEV) {
+    return undefined
+  }
+  const raw = import.meta.env.VITE_API_BASE_URL?.trim()
+  return raw ? normalizeBaseUrl(raw) : undefined
+}
 
 export const api = axios.create({
-  baseURL: baseURL || undefined,
+  baseURL: resolveApiBaseURL(),
   headers: {
     'Content-Type': 'application/json',
   },

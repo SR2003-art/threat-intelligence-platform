@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AiPanel } from '../components/AiPanel'
@@ -46,8 +47,14 @@ export function HomePage() {
         setTotalElements(paged.totalElements)
         setTotalPages(paged.totalPages)
         setPage(paged.page)
-      } catch {
-        setError('Unable to load indicators right now.')
+      } catch (e) {
+        if (import.meta.env.DEV && axios.isAxiosError(e) && !e.response) {
+          setError(
+            'Cannot reach the API. Start the Backend on port 8080 (with MySQL running), keep this Frontend dev server running, then refresh.',
+          )
+        } else {
+          setError('Unable to load indicators right now.')
+        }
       } finally {
         setLoading(false)
       }
