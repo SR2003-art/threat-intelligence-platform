@@ -10,7 +10,8 @@
     "dev:phone": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "preview:lan": "vite preview --host 0.0.0.0 --port 4173"
   },
   "dependencies": {
     "axios": "^1.16.0",
