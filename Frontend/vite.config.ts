@@ -8,7 +8,18 @@ import { defineConfig, loadEnv } from 'vite'
 // "localhost" maps to ::1 but the dev socket is IPv4-only).
 dns.setDefaultResultOrder('ipv4first')
 
-/** Pick this machine’s LAN IPv4 so Vite HMR WebSockets work on phones without manual .env. */
+/** npm sets this for the script name, e.g. `dev` vs `dev:lan` (see package.json scripts). */
+function npmLifecycle(): string {
+  return process.env.npm_lifecycle_event ?? ''
+}
+
+/** Same Wi‑Fi / all interfaces — use `npm run dev:lan` or `npm run dev:phone`. */
+function bindAllNetworkInterfaces(): boolean {
+  const ev = npmLifecycle()
+  return ev === 'dev:lan' || ev === 'dev:phone' || ev === 'preview:lan'
+}
+
+/** Pick this machine’s LAN IPv4 for Vite HMR when using dev:lan (phones). */
 function getPreferredLanIPv4(): string {
   const nets = os.networkInterfaces()
   const scored: { ip: string; score: number }[] = []
@@ -44,23 +55,29 @@ export default defineConfig(({ mode }) => {
   const devLanIpManual = env.DEV_LAN_IP?.trim() || process.env.DEV_LAN_IP?.trim() || ''
   const disableHmr =
     env.DEV_DISABLE_HMR === 'true' || env.VITE_DISABLE_HMR === 'true'
-  const hmrHost = devLanIpManual || getPreferredLanIPv4()
+  const lan = bindAllNetworkInterfaces()
+  const lanHmrHost = devLanIpManual || getPreferredLanIPv4()
 
   let hmr: false | { host: string; port: number; protocol: 'ws' } | undefined
   if (disableHmr) {
     hmr = false
-  } else if (hmrHost) {
-    hmr = { host: hmrHost, port: 5173, protocol: 'ws' }
+  } else if (lan && lanHmrHost) {
+    hmr = { host: lanHmrHost, port: 5173, protocol: 'ws' }
+  } else if (lan && !lanHmrHost) {
+    hmr = false
   } else {
     hmr = undefined
   }
 
+  const devHost = lan ? '0.0.0.0' : '127.0.0.1'
+  const previewHost = npmLifecycle() === 'preview:lan' ? '0.0.0.0' : '127.0.0.1'
+
   return {
     plugins: [react(), tailwindcss()],
-    // 0.0.0.0 = all interfaces: laptops/phones on same Wi‑Fi use http://<PC IPv4>:5173/
-    // (never use localhost on the phone — that is the phone itself).
+    // `npm run dev` → 127.0.0.1 only — open http://127.0.0.1:5173 on this PC.
+    // `npm run dev:lan` → 0.0.0.0 — phone uses http://<PC IPv4>:5173 (same Wi‑Fi).
     server: {
-      host: '0.0.0.0',
+      host: devHost,
       port: 5173,
       strictPort: false,
       cors: true,
@@ -68,7 +85,7 @@ export default defineConfig(({ mode }) => {
       ...(hmr !== undefined ? { hmr } : {}),
     },
     preview: {
-      host: '0.0.0.0',
+      host: previewHost,
       port: 4173,
       strictPort: false,
       proxy: { ...apiDevProxy },
