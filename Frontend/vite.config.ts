@@ -1,7 +1,7 @@
 import dns from 'node:dns'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 
 // Prefer IPv4 for localhost-related resolution (fewer Chrome/Edge hangs on Windows when
 // "localhost" maps to ::1 but the dev socket is IPv4-only).
@@ -17,27 +17,43 @@ const apiDevProxy = {
 } as const
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  // Listen on all interfaces (LAN-friendly). In Chrome/Edge, if http://localhost:5173/
-  // hangs, use http://127.0.0.1:5173/ instead (IPv6/localhost mismatch on some Windows setups),
-  // or run `npm run dev:ipv4`. Do not open dist/index.html via file:// — use `npm run dev` or
-  // `npm run preview`. For phones on Wi‑Fi: `npm run dev:lan` then http://YOUR_PC_IP:5173/
-  server: {
-    host: true,
-    port: 5173,
-    strictPort: false,
-    cors: true,
-    proxy: { ...apiDevProxy },
-  },
-  preview: {
-    host: true,
-    port: 4173,
-    strictPort: false,
-    proxy: { ...apiDevProxy },
-  },
-  build: {
-    // Broader than "esnext" so production builds run on slightly older Chromium/Edge/Safari.
-    target: ['es2020', 'chrome87', 'edge88', 'firefox78', 'safari14'],
-  },
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  // Set to your PC Wi‑Fi IPv4 (from `ipconfig`) so Vite HMR WebSocket works when you open
+  // the app from a phone at http://YOUR_IP:5173 — otherwise the phone may load a blank page.
+  const devLanIp =
+    env.DEV_LAN_IP?.trim() || process.env.DEV_LAN_IP?.trim() || ''
+
+  return {
+    plugins: [react(), tailwindcss()],
+    // 0.0.0.0 = listen on all network interfaces so phones on the same Wi‑Fi can connect.
+    // On your PC use http://127.0.0.1:5173/ ; on your phone use http://<PC IPv4>:5173/
+    // (never use localhost/127.0.0.1 on the phone — that refers to the phone itself).
+    server: {
+      host: '0.0.0.0',
+      port: 5173,
+      strictPort: false,
+      cors: true,
+      proxy: { ...apiDevProxy },
+      ...(devLanIp
+        ? {
+            hmr: {
+              host: devLanIp,
+              port: 5173,
+              protocol: 'ws' as const,
+            },
+          }
+        : {}),
+    },
+    preview: {
+      host: '0.0.0.0',
+      port: 4173,
+      strictPort: false,
+      proxy: { ...apiDevProxy },
+    },
+    build: {
+      // Broader than "esnext" so production builds run on slightly older Chromium/Edge/Safari.
+      target: ['es2020', 'chrome87', 'edge88', 'firefox78', 'safari14'],
+    },
+  }
 })
